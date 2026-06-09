@@ -195,7 +195,7 @@ export default function ReservationPage() {
           <div className={styles.callInfo} style={{ marginTop: '20px' }}>
             <p className={styles.callLabel}>Need to call us?</p>
             <p>
-              If you&apos;re running late, call <a href="tel:+2340000000000">+234 000 0000 000</a>.
+              If you&apos;re running late, call <a href="tel:+2349039986098">+234 903 998 6098</a>.
             </p>
           </div>
           <button className={styles.submitBtn} onClick={handleReset}>
