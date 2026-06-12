@@ -14,7 +14,6 @@ import {
   deleteReservation,
   cancelReservation,
   completeReservation,
-  assignTableNumber,
   markArrivedReservation,
   markRunningLate,
 } from '../../lib/reservations'
@@ -22,7 +21,6 @@ import styles from './dashboard.module.css'
 
 const today = new Date().toISOString().split('T')[0]
 const TOTAL_TABLES = 20
-const TABLE_NUMBERS = Array.from({ length: TOTAL_TABLES }, (_, i) => i + 1)
 
 function formatTime(t) {
   const [h, m] = t.split(':').map(Number)
@@ -50,7 +48,6 @@ function LoginScreen() {
     setError('')
     try {
       await signInWithEmailAndPassword(auth, email, password)
-      // onAuthStateChanged in the parent will automatically switch to dashboard
     } catch (err) {
       setShaking(true)
       setTimeout(() => setShaking(false), 500)
@@ -70,10 +67,6 @@ function LoginScreen() {
     }
   }
 
-  function handleKey(e) {
-    if (e.key === 'Enter') handleLogin()
-  }
-
   return (
     <div className={styles.loginPage}>
       <div className={`${styles.loginCard} ${shaking ? styles.shake : ''}`}>
@@ -88,7 +81,7 @@ function LoginScreen() {
             placeholder="Email address"
             value={email}
             onChange={(e) => { setEmail(e.target.value); setError('') }}
-            onKeyDown={handleKey}
+            onKeyDown={(e) => e.key === 'Enter' && handleLogin()}
             className={styles.loginInput}
             autoFocus
           />
@@ -100,7 +93,7 @@ function LoginScreen() {
             placeholder="Password"
             value={password}
             onChange={(e) => { setPassword(e.target.value); setError('') }}
-            onKeyDown={handleKey}
+            onKeyDown={(e) => e.key === 'Enter' && handleLogin()}
             className={styles.loginInput}
           />
         </div>
@@ -121,7 +114,7 @@ function LoginScreen() {
 
 // ── Main Dashboard ────────────────────────────────────────
 export default function DashboardPage() {
-  const [user, setUser] = useState(undefined) // undefined = still checking auth
+  const [user, setUser] = useState(undefined) // undefined = still checking
   const [reservations, setReservations] = useState([])
   const [filter, setFilter] = useState('all')
   const [searchInput, setSearchInput] = useState('')
@@ -130,7 +123,7 @@ export default function DashboardPage() {
   const [loading, setLoading] = useState(true)
   const [toast, setToast] = useState('')
 
-  // Firebase auth state — persists across refreshes automatically
+  // Firebase auth — persists across refreshes automatically
   useEffect(() => {
     const unsub = onAuthStateChanged(auth, (firebaseUser) => {
       setUser(firebaseUser ?? null)
@@ -138,26 +131,19 @@ export default function DashboardPage() {
     return () => unsub()
   }, [])
 
-  // Subscribe to reservations immediately, even before login state resolves
+  // Only load reservations when logged in
   useEffect(() => {
+    if (!user) return
     const unsub = subscribeToReservations((data) => {
       setReservations(data)
       setLoading(false)
     })
     return () => unsub()
-  }, [])
+  }, [user])
 
   function showToast(msg) {
     setToast(msg)
     setTimeout(() => setToast(''), 3000)
-  }
-
-  function handleSearch() {
-    setSearchQuery(searchInput.trim())
-  }
-
-  function toggleRequest(id) {
-    setExpandedRequests((prev) => ({ ...prev, [id]: !prev[id] }))
   }
 
   async function handleConfirm(id) {
@@ -193,12 +179,6 @@ export default function DashboardPage() {
     showToast('Table returned to free status ✓')
   }
 
-  async function handleAssignTable(id, tableNumber) {
-    if (!tableNumber) return
-    await assignTableNumber(id, Number(tableNumber))
-    showToast(`Table ${tableNumber} assigned ✓`)
-  }
-
   async function handleLogout() {
     await signOut(auth)
   }
@@ -209,18 +189,17 @@ export default function DashboardPage() {
   // Not logged in — show login screen
   if (!user) return <LoginScreen />
 
-  // ── Logged in — show dashboard ────────────────────────
+  // ── Logged in ─────────────────────────────────────────
   const todayRes = reservations.filter((r) => r.date === today)
   const confirmed = reservations.filter((r) => r.status === 'confirmed')
   const pending = reservations.filter((r) => r.status === 'pending')
   const tonightGuests = todayRes.reduce((a, r) => a + (typeof r.party === 'number' ? r.party : 6), 0)
 
-  const todayAssignedReservations = reservations.filter((r) => r.date === today && r.status !== 'cancelled' && r.status !== 'completed' && r.tableNumber)
-  const activeAssignedTableNumbers = Array.from(new Set(todayAssignedReservations.map((r) => Number(r.tableNumber))))
-  const arrivedCount = reservations.filter((r) => r.date === today && r.status === 'arrived' && r.tableNumber).length
+  const arrivedCount = reservations.filter((r) => r.date === today && r.status === 'arrived').length
+  const confirmedCount = reservations.filter((r) => r.date === today && r.status === 'confirmed').length
   const takenTables = arrivedCount
-  const reservedTables = Math.max(0, activeAssignedTableNumbers.length - takenTables)
-  const freeTables = Math.max(0, TOTAL_TABLES - activeAssignedTableNumbers.length)
+  const reservedTables = confirmedCount
+  const freeTables = Math.max(0, TOTAL_TABLES - (takenTables + reservedTables))
 
   const filtered = reservations
     .filter((r) => {
@@ -242,7 +221,6 @@ export default function DashboardPage() {
     <div className={styles.page}>
       {toast && <div className={styles.toast}>{toast}</div>}
 
-      {/* Nav */}
       <nav className={styles.nav}>
         <div className={styles.logo}>NOVA</div>
         <div className={styles.navRight}>
@@ -253,7 +231,6 @@ export default function DashboardPage() {
         </div>
       </nav>
 
-      {/* Header */}
       <div className={styles.header}>
         <div>
           <div className={styles.eyebrow}>Reception · Live View</div>
@@ -265,7 +242,6 @@ export default function DashboardPage() {
         <div className={styles.dateBlock}>{todayFormatted}</div>
       </div>
 
-      {/* Stats */}
       <div className={styles.statsRow}>
         <div className={styles.statCard}>
           <div className={styles.statLabel}>Total Bookings</div>
@@ -285,9 +261,7 @@ export default function DashboardPage() {
         <div className={styles.statCard}>
           <div className={styles.statLabel}>Confirmed</div>
           <div className={styles.statValue}>{confirmed.length}</div>
-          <div className={styles.statSub}>
-            Awaiting <strong>{pending.length}</strong> pending
-          </div>
+          <div className={styles.statSub}>Awaiting <strong>{pending.length}</strong> pending</div>
         </div>
         <div className={styles.statCard}>
           <div className={styles.statLabel}>Tables</div>
@@ -298,7 +272,6 @@ export default function DashboardPage() {
         </div>
       </div>
 
-      {/* Table */}
       <div className={styles.tableSection}>
         <div className={styles.tableHeader}>
           <div className={styles.tableTitle}>All Reservations</div>
@@ -319,11 +292,11 @@ export default function DashboardPage() {
           <input
             value={searchInput}
             onChange={(e) => setSearchInput(e.target.value)}
-            onKeyDown={(e) => e.key === 'Enter' && handleSearch()}
+            onKeyDown={(e) => e.key === 'Enter' && setSearchQuery(searchInput.trim())}
             placeholder="Search by guest name"
             className={styles.searchInput}
           />
-          <button type="button" className={styles.searchBtn} onClick={handleSearch}>
+          <button type="button" className={styles.searchBtn} onClick={() => setSearchQuery(searchInput.trim())}>
             Search
           </button>
           {(searchQuery || searchInput) && (
@@ -331,7 +304,6 @@ export default function DashboardPage() {
               type="button"
               className={styles.clearSearchBtn}
               onClick={() => { setSearchInput(''); setSearchQuery('') }}
-              aria-label="Clear search"
             >
               ✕
             </button>
@@ -357,7 +329,6 @@ export default function DashboardPage() {
                   <th>Party</th>
                   <th>Occasion</th>
                   <th>Special Requests</th>
-                  <th>Table</th>
                   <th>Status</th>
                   <th>Ref</th>
                   <th>Actions</th>
@@ -374,17 +345,10 @@ export default function DashboardPage() {
                       <div className={styles.dateBadge}>{formatDate(r.date)}</div>
                       <div className={styles.timeText}>{formatTime(r.time)}</div>
                     </td>
+                    <td><span className={styles.partyPill}>👥 {r.party}</span></td>
+                    <td><span className={styles.occasionText}>{r.occasion || '—'}</span></td>
                     <td>
-                      <span className={styles.partyPill}>👥 {r.party}</span>
-                    </td>
-                    <td>
-                      <span className={styles.occasionText}>{r.occasion || '—'}</span>
-                    </td>
-                    <td>
-                      <span
-                        className={`${styles.requestText} ${expandedRequests[r.id] ? styles.expandedRequestText : ''}`}
-                        title={r.requests}
-                      >
+                      <span className={`${styles.requestText} ${expandedRequests[r.id] ? styles.expandedRequestText : ''}`}>
                         {r.requests
                           ? expandedRequests[r.id]
                             ? r.requests
@@ -395,7 +359,7 @@ export default function DashboardPage() {
                         <button
                           type="button"
                           className={styles.requestToggleBtn}
-                          onClick={() => toggleRequest(r.id)}
+                          onClick={() => setExpandedRequests((p) => ({ ...p, [r.id]: !p[r.id] }))}
                         >
                           {expandedRequests[r.id] ? '▲ View less' : '▼ View more'}
                         </button>
@@ -413,48 +377,25 @@ export default function DashboardPage() {
                         {r.status.toUpperCase()}
                       </span>
                     </td>
-                    <td>
-                      {r.tableNumber ? (
-                        <span className={styles.tablePill}>Table {r.tableNumber}</span>
-                      ) : (
-                        <select
-                          className={styles.tableSelect}
-                          value=""
-                          onChange={(e) => handleAssignTable(r.id, e.target.value)}
-                        >
-                          <option value="">Assign table</option>
-                          {TABLE_NUMBERS.map((table) => {
-                            const takenByOther = activeAssignedTableNumbers.includes(table) && Number(r.tableNumber) !== table
-                            return (
-                              <option key={table} value={table} disabled={takenByOther}>
-                                {takenByOther ? `Table ${table} (taken)` : `Table ${table}`}
-                              </option>
-                            )
-                          })}
-                        </select>
-                      )}
-                    </td>
-                    <td>
-                      <span className={styles.refCode}>{r.ref}</span>
-                    </td>
+                    <td><span className={styles.refCode}>{r.ref}</span></td>
                     <td>
                       <div className={styles.actions}>
                         {r.status === 'pending' && (
-                          <button className={`${styles.actionBtn} ${styles.confirmBtn}`} onClick={() => handleConfirm(r.id)} title="Confirm reservation">✓</button>
+                          <button className={`${styles.actionBtn} ${styles.confirmBtn}`} onClick={() => handleConfirm(r.id)} title="Confirm">✓</button>
                         )}
                         {(r.status === 'confirmed' || r.status === 'late') && (
                           <button className={`${styles.actionBtn} ${styles.arrivedBtn}`} onClick={() => handleArrived(r.id)} title="Mark arrived">✔</button>
                         )}
                         {r.status === 'confirmed' && (
-                          <button className={`${styles.actionBtn} ${styles.lateBtn}`} onClick={() => handleLate(r.id)} title="Mark running late">⏱</button>
+                          <button className={`${styles.actionBtn} ${styles.lateBtn}`} onClick={() => handleLate(r.id)} title="Mark late">⏱</button>
                         )}
                         {(r.status === 'pending' || r.status === 'confirmed' || r.status === 'late') && (
-                          <button className={`${styles.actionBtn} ${styles.cancelBtn}`} onClick={() => handleCancel(r.id)} title="Cancel reservation">X</button>
+                          <button className={`${styles.actionBtn} ${styles.cancelBtn}`} onClick={() => handleCancel(r.id)} title="Cancel">Cancel</button>
                         )}
                         {r.status === 'arrived' && (
-                          <button className={`${styles.actionBtn} ${styles.completeBtn}`} onClick={() => handleComplete(r.id)} title="Free table">🍽️</button>
+                          <button className={`${styles.actionBtn} ${styles.completeBtn}`} onClick={() => handleComplete(r.id)} title="Free table">Free Table</button>
                         )}
-                        <button className={`${styles.actionBtn} ${styles.deleteBtn} ${styles.trashBtn}`} onClick={() => handleDelete(r.id)} title="Delete reservation">🗑️</button>
+                        <button className={`${styles.actionBtn} ${styles.deleteBtn} ${styles.trashBtn}`} onClick={() => handleDelete(r.id)} title="Delete">🗑️</button>
                       </div>
                     </td>
                   </tr>

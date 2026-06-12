@@ -20,18 +20,6 @@
   color: var(--gold);
 }
 
-.dashLink {
-  font-size: 10px;
-  letter-spacing: 3px;
-  color: var(--muted);
-  text-decoration: none;
-  transition: color 0.2s;
-  font-weight: 500;
-}
-.dashLink:hover {
-  color: var(--gold);
-}
-
 /* ── Hero ── */
 .hero {
   padding: 80px 40px 60px;
@@ -141,7 +129,7 @@
   transition: all 0.2s;
   font-weight: 400;
 }
-.timeBtn:hover {
+.timeBtn:hover:not(.disabled) {
   border-color: var(--gold);
   color: var(--gold-light);
 }
@@ -150,6 +138,10 @@
   border-color: var(--gold);
   color: var(--dark);
   font-weight: 600;
+}
+.disabled {
+  opacity: 0.35;
+  cursor: not-allowed;
 }
 
 /* ── Party Grid ── */
@@ -181,6 +173,29 @@
   font-weight: 600;
 }
 
+/* ── Policy Checkbox ── */
+.policyRow {
+  margin-top: 18px;
+}
+
+.checkboxLabel {
+  display: flex;
+  gap: 12px;
+  align-items: flex-start;
+  font-size: 12px;
+  color: var(--muted);
+  line-height: 1.6;
+  cursor: pointer;
+}
+
+.checkboxInput {
+  margin-top: 4px;
+  width: 16px;
+  height: 16px;
+  accent-color: var(--gold);
+  flex-shrink: 0;
+}
+
 /* ── Error ── */
 .error {
   font-size: 12px;
@@ -204,40 +219,12 @@
   margin-top: 32px;
   transition: all 0.2s;
   text-transform: uppercase;
+  cursor: pointer;
 }
-.submitBtn:hover:not(:disabled) {
-  background: var(--gold-light);
-}
-.submitBtn:disabled {
-  opacity: 0.6;
-  cursor: not-allowed;
-}
+.submitBtn:hover:not(:disabled) { background: var(--gold-light); }
+.submitBtn:disabled { opacity: 0.6; cursor: not-allowed; }
 
-.disabled {
-  opacity: 0.45;
-  cursor: not-allowed;
-}
-
-.policyRow {
-  margin-top: 18px;
-}
-
-.checkboxLabel {
-  display: flex;
-  gap: 12px;
-  align-items: flex-start;
-  font-size: 12px;
-  color: var(--muted);
-  line-height: 1.6;
-}
-
-.checkboxInput {
-  margin-top: 4px;
-  width: 16px;
-  height: 16px;
-  accent-color: var(--gold);
-}
-
+/* ── Secondary Section ── */
 .secondarySection {
   margin-top: 40px;
   display: grid;
@@ -295,15 +282,16 @@
   font-weight: 600;
   text-transform: uppercase;
   transition: all 0.2s;
+  cursor: pointer;
 }
-
 .cancelSearchBtn:hover:not(:disabled),
-.cancelBtn:hover:not(:disabled) {
-  background: var(--gold-light);
-}
+.cancelBtn:hover:not(:disabled) { background: var(--gold-light); }
+.cancelSearchBtn:disabled,
+.cancelBtn:disabled { opacity: 0.6; cursor: not-allowed; }
 
 .successMessage {
-  color: var(--success, #8BC34A);
+  color: var(--success);
+  font-size: 12px;
   margin-top: 12px;
   letter-spacing: 0.5px;
 }
@@ -323,13 +311,16 @@
   border: 1px solid var(--border);
   border-radius: 8px;
   background: var(--dark3);
+  font-size: 12px;
+  color: var(--muted);
+  line-height: 1.8;
 }
 
 .reservationRef {
   font-size: 12px;
   letter-spacing: 2px;
   color: var(--gold);
-  margin-bottom: 8px;
+  margin-bottom: 4px;
 }
 
 /* ── Success ── */
@@ -373,7 +364,6 @@
   letter-spacing: 3px;
   color: var(--gold);
   margin-top: 20px;
-  margin-bottom: 0;
 }
 
 /* ── Mobile ── */
