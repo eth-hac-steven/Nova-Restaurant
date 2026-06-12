@@ -74,6 +74,45 @@ export default function ReservationPage() {
     }
 
     setLoading(true)
+
+    // reCAPTCHA verification (optional; requires NEXT_PUBLIC_RECAPTCHA_SITE_KEY and server secret)
+    const siteKey = process.env.NEXT_PUBLIC_RECAPTCHA_SITE_KEY
+    if (siteKey) {
+      if (!window.grecaptcha) {
+        setError('reCAPTCHA not loaded. Please try again.')
+        setLoading(false)
+        return
+      }
+      try {
+        // Wait for grecaptcha to be ready
+        await new Promise((res) => {
+          try {
+            window.grecaptcha.ready(res)
+          } catch (e) {
+            return res()
+          }
+        })
+        const token = await window.grecaptcha.execute(siteKey, { action: 'reserve' })
+        const verifyRes = await fetch('/api/verify-recaptcha', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ token }),
+        })
+        const verifyJson = await verifyRes.json()
+        console.log('reCAPTCHA response:', verifyJson)
+        if (!verifyRes.ok || !verifyJson.success || (verifyJson.score !== undefined && verifyJson.score < 0.5)) {
+          setError('reCAPTCHA verification failed. Please try again.')
+          setLoading(false)
+          return
+        }
+      } catch (err) {
+        console.error('reCAPTCHA error', err)
+        setError('reCAPTCHA verification failed. Please try again.')
+        setLoading(false)
+        return
+      }
+    }
+
     try {
       const { ref } = await addReservation({
         name: form.name.trim(),

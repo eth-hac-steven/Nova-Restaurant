@@ -70,6 +70,10 @@ NEXT_PUBLIC_FIREBASE_PROJECT_ID=your-project-id
 NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET=your-project.appspot.com
 NEXT_PUBLIC_FIREBASE_MESSAGING_SENDER_ID=123456789
 NEXT_PUBLIC_FIREBASE_APP_ID=1:123:web:abc123
+# (Optional) Google reCAPTCHA v3 — client site key for the browser
+NEXT_PUBLIC_RECAPTCHA_SITE_KEY=your-recaptcha-site-key
+# (Required on server) reCAPTCHA secret key (keep this private)
+RECAPTCHA_SECRET_KEY=your-recaptcha-secret
 ```
 
 ```bash

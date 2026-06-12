@@ -387,13 +387,13 @@ export default function DashboardPage() {
                           <button className={`${styles.actionBtn} ${styles.arrivedBtn}`} onClick={() => handleArrived(r.id)} title="Mark arrived">✔</button>
                         )}
                         {r.status === 'confirmed' && (
-                          <button className={`${styles.actionBtn} ${styles.lateBtn}`} onClick={() => handleLate(r.id)} title="Mark late">⏱</button>
+                          <button className={`${styles.actionBtn} ${styles.lateBtn}`} onClick={() => handleLate(r.id)} title="Mark late">🕛</button>
                         )}
                         {(r.status === 'pending' || r.status === 'confirmed' || r.status === 'late') && (
-                          <button className={`${styles.actionBtn} ${styles.cancelBtn}`} onClick={() => handleCancel(r.id)} title="Cancel">Cancel</button>
+                          <button className={`${styles.actionBtn} ${styles.cancelBtn}`} onClick={() => handleCancel(r.id)} title="Cancel">❌</button>
                         )}
                         {r.status === 'arrived' && (
-                          <button className={`${styles.actionBtn} ${styles.completeBtn}`} onClick={() => handleComplete(r.id)} title="Free table">Free Table</button>
+                          <button className={`${styles.actionBtn} ${styles.completeBtn}`} onClick={() => handleComplete(r.id)} title="Free table">🍽️</button>
                         )}
                         <button className={`${styles.actionBtn} ${styles.deleteBtn} ${styles.trashBtn}`} onClick={() => handleDelete(r.id)} title="Delete">🗑️</button>
                       </div>
